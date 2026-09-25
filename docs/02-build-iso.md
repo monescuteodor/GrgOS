@@ -91,3 +91,4 @@ prompt with the GrgOS MOTD. Continue to
 | Runs out of space | Free ≥15 GB on the Linux drive; `rm -rf ~/grgos-build/work` between attempts |
 | `bad interpreter: /bin/bash^M` | Re-run the CRLF normalize command in step 2 |
 | Very slow / hangs on squashfs | You're building on `/mnt/c`. Copy the repo to `~` and rebuild |
+| `cp: Cannot allocate memory` at the final copy step | Known WSL 9p bug copying multi-GB files onto `/mnt/c`. The ISO is fine in `~/grgos-build/out/`; the script retries with chunked `dd`. If it still fails, pull it from **Windows PowerShell**: `Copy-Item '\\wsl.localhost\archlinux\root\grgos-build\out\grgos-*.iso' -Destination C:\GrgOS-ISO\` |

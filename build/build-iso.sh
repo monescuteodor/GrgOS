@@ -207,11 +207,21 @@ copy_back() {
   local iso; iso="$(ls -t "${OUT_DIR}"/*.iso 2>/dev/null | head -1 || true)"
   [[ -n "$iso" ]] || die "No ISO produced in $OUT_DIR"
 
-  log "Built: $iso"
+  log "Built: $iso ($(du -h "$iso" | cut -f1))"
   if [[ -d "${REPO_ROOT}" && "${REPO_ROOT}" == /mnt/* ]]; then
     mkdir -p "${REPO_ROOT}/out"
-    cp -f "$iso" "${REPO_ROOT}/out/"
-    ok "Copied ISO to Windows side: ${REPO_ROOT}/out/$(basename "$iso")"
+    local target="${REPO_ROOT}/out/$(basename "$iso")"
+    log "Copying ISO to the Windows side (chunked, to dodge the WSL 9p ENOMEM bug)"
+    # A plain cp/rsync of a multi-GB file onto the DrvFs/9p Windows mount can
+    # fail with "cp: Cannot allocate memory". dd with small blocks avoids it.
+    if dd if="$iso" of="$target" bs=4M conv=fsync 2>/dev/null; then
+      ok "Copied ISO to Windows side: $target"
+    else
+      rm -f "$target" 2>/dev/null || true
+      warn "Direct copy onto the Windows mount failed (known WSL limitation)."
+      warn "Pull it from Windows PowerShell instead (reliable direction):"
+      warn "  Copy-Item '\\\\wsl.localhost\\${WSL_DISTRO_NAME:-archlinux}\\root\\grgos-build\\out\\$(basename "$iso")' -Destination C:\\GrgOS-ISO\\"
+    fi
   else
     warn "Repo is not on /mnt/c; leaving ISO in $OUT_DIR"
   fi
