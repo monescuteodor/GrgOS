@@ -112,6 +112,12 @@ assemble_profile() {
   mkdir -p "${PROFILE_DIR}/airootfs/etc/skel"
   rsync -a "${REPO_ROOT}/config/home/" "${PROFILE_DIR}/airootfs/etc/skel/"
 
+  # 4b) Brand the system identity (os-release / hostname / issue) as GrgOS.
+  log "Installing GrgOS system identity (os-release, hostname, issue)"
+  install -Dm0644 "${REPO_ROOT}/config/system/os-release" "${PROFILE_DIR}/airootfs/usr/lib/os-release"
+  install -Dm0644 "${REPO_ROOT}/config/system/hostname"   "${PROFILE_DIR}/airootfs/etc/hostname"
+  install -Dm0644 "${REPO_ROOT}/config/system/issue"      "${PROFILE_DIR}/airootfs/etc/issue"
+
   # 5) Copy helper commands into /usr/local/bin.
   log "Installing helper commands into /usr/local/bin"
   mkdir -p "${PROFILE_DIR}/airootfs/usr/local/bin"
@@ -143,8 +149,9 @@ assemble_profile() {
        "${PROFILE_DIR}/airootfs/etc/skel" -type f 2>/dev/null \
     | while read -r f; do sed -i 's/\r$//' "$f" 2>/dev/null || true; done
 
-  # 10) Brand the profile + register file permissions.
+  # 10) Brand the profile + boot menus + register file permissions.
   brand_profile
+  brand_bootloaders
   register_permissions
 
   ok "Profile assembled"
@@ -175,6 +182,28 @@ brand_profile() {
     -e "s|^iso_publisher=.*|iso_publisher=\"${ISO_PUBLISHER}\"|" \
     -e "s|^iso_application=.*|iso_application=\"${ISO_APPLICATION}\"|" \
     "$pd"
+}
+
+brand_bootloaders() {
+  # Rewrite the visible boot-menu titles from "Arch Linux" to "GrgOS".
+  # Only display strings are touched; the %ARCHISO_LABEL% boot params that
+  # mkarchiso substitutes are left intact, so booting is unaffected.
+  log "Rebranding boot menus (Arch Linux -> GrgOS)"
+  shopt -s nullglob
+  local files=(
+    "${PROFILE_DIR}"/syslinux/*.cfg
+    "${PROFILE_DIR}"/efiboot/loader/entries/*.conf
+    "${PROFILE_DIR}"/grub/*.cfg
+  )
+  shopt -u nullglob
+  local f
+  for f in "${files[@]}"; do
+    [[ -f "$f" ]] || continue
+    sed -i \
+      -e 's/Arch Linux install medium/GrgOS/g' \
+      -e 's/Arch Linux/GrgOS/g' \
+      "$f"
+  done
 }
 
 register_permissions() {

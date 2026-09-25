@@ -1,0 +1,11 @@
+NAME="GrgOS"
+PRETTY_NAME="GrgOS"
+ID=grgos
+ID_LIKE=arch
+BUILD_ID=rolling
+VERSION_ID="2026.09"
+ANSI_COLOR="38;2;122;162;247"
+HOME_URL="https://github.com/monescuteodor/GrgOS"
+SUPPORT_URL="https://github.com/monescuteodor/GrgOS"
+BUG_REPORT_URL="https://github.com/monescuteodor/GrgOS/issues"
+LOGO=archlinux-logo

@@ -66,6 +66,17 @@ sudo install -d /usr/local/bin
 sudo install -m0755 "$ROOT"/bin/* /usr/local/bin/
 ok "grgos-* commands installed"
 
+# ---- 2b) brand the installed system as GrgOS --------------------------------
+log "Branding the system as GrgOS (os-release, hostname)"
+# /etc/os-release is normally a symlink to ../usr/lib/os-release; replacing it
+# with a real file makes GrgOS the authoritative identity (systemd reads it first).
+sudo install -Dm0644 "$ROOT/config/system/os-release" /etc/os-release
+sudo install -Dm0644 "$ROOT/config/system/issue" /etc/issue 2>/dev/null || true
+if [[ ! -s /etc/hostname ]] || grep -qx 'archlinux\|archiso\|localhost' /etc/hostname 2>/dev/null; then
+  echo grgos | sudo tee /etc/hostname >/dev/null
+fi
+ok "System branded as GrgOS"
+
 # ---- 3) enable core services ------------------------------------------------
 log "Enabling core services (NetworkManager, Bluetooth)"
 sudo systemctl enable --now NetworkManager.service 2>/dev/null || warn "NetworkManager not enabled"
