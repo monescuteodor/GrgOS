@@ -1,0 +1,15 @@
+# Build output / work directories
+/out/
+/work/
+*.iso
+*.iso.sig
+
+# archiso work dir if ever created in-tree
+build/work/
+build/out/
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~

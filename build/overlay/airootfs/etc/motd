@@ -1,0 +1,25 @@
+
+   ____              ___  ____
+  / ___|_ __ __ _   / _ \/ ___|
+ | |  _| '__/ _` | | | | \___ \
+ | |_| | | | (_| | | |_| |___) |
+  \____|_|  \__, |  \___/|____/
+            |___/    live environment
+
+ Welcome to the GrgOS live ISO.
+
+   grgos-preview     Preview the Hyprland desktop right now (runs as root; for a
+                     quick look only — the real setup happens after install).
+
+   grgos-install     Install GrgOS to disk. This launches archinstall (pick your
+                     disk, user and password), then seeds the GrgOS provisioning
+                     payload onto the new system.
+
+ After installing and rebooting, log in and run:
+
+   /usr/local/share/grgos/scripts/install.sh
+
+ to pull in the AI / work / trading apps, web-app shortcuts and theming.
+
+ Docs & source:  https://github.com/monescuteodor/GrgOS
+

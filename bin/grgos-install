@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# grgos-install — install GrgOS to disk.
+#
+# Stage 1: run archinstall (interactive) to lay down a minimal Arch system.
+# Stage 2: copy the GrgOS provisioning payload onto the freshly installed
+#          system so that, after first boot, the user just runs:
+#              sudo /usr/local/share/grgos/scripts/install.sh
+#
+# Run this from the GrgOS live ISO (as root).
+set -euo pipefail
+
+PAYLOAD_SRC="/usr/local/share/grgos"
+TARGET="/mnt"
+
+c_grn=$'\e[1;32m'; c_ylw=$'\e[1;33m'; c_red=$'\e[1;31m'; c_rst=$'\e[0m'
+ok()   { printf '%s==>%s %s\n' "$c_grn" "$c_rst" "$*"; }
+warn() { printf '%s!!%s %s\n'  "$c_ylw" "$c_rst" "$*" >&2; }
+die()  { printf '%serror%s %s\n' "$c_red" "$c_rst" "$*" >&2; exit 1; }
+
+[[ $EUID -eq 0 ]] || die "Run as root."
+command -v archinstall >/dev/null 2>&1 || die "archinstall not found on this ISO."
+
+cat <<'BANNER'
+============================================================
+  GrgOS installer
+------------------------------------------------------------
+  archinstall will now open. Suggested choices:
+    - Profile:   Minimal   (GrgOS supplies its own desktop)
+    - Audio:     Pipewire
+    - Network:   NetworkManager   (IMPORTANT: enable this)
+    - Additional packages: leave empty (already in the ISO)
+    - Create a normal user and give it sudo.
+  When archinstall finishes, DO NOT reboot yet if it asks —
+  choose to keep the installation mounted so GrgOS can seed
+  itself. If it unmounts, this script will remount and seed.
+============================================================
+BANNER
+read -r -p "Press Enter to launch archinstall..." _
+
+archinstall || die "archinstall exited with an error."
+
+# Try to locate the target root. archinstall usually mounts it at /mnt.
+if ! mountpoint -q "$TARGET"; then
+  warn "$TARGET is not mounted. If archinstall already unmounted the target,"
+  warn "mount your new root at $TARGET and re-run:  grgos-install --seed-only"
+  [[ "${1:-}" == "--seed-only" ]] || exit 0
+fi
+
+seed() {
+  ok "Seeding GrgOS payload into the installed system"
+  install -d "${TARGET}/usr/local/share"
+  rsync -a "$PAYLOAD_SRC" "${TARGET}/usr/local/share/"
+  install -d "${TARGET}/usr/local/bin"
+  install -m0755 "${PAYLOAD_SRC}"/bin/* "${TARGET}/usr/local/bin/" 2>/dev/null || true
+
+  # Drop a first-login hint.
+  cat > "${TARGET}/etc/motd" <<'EOF'
+
+  GrgOS is installed. Finish provisioning with:
+
+      sudo /usr/local/share/grgos/scripts/install.sh
+
+  (Installs AI/work/trading apps, web-app shortcuts and theming.)
+
+EOF
+  ok "Payload seeded."
+  echo
+  ok "Done. Reboot, log in as your user, and run:"
+  echo "     sudo /usr/local/share/grgos/scripts/install.sh"
+}
+
+if [[ "${1:-}" == "--seed-only" ]]; then
+  mountpoint -q "$TARGET" || die "Mount the target root at $TARGET first."
+fi
+seed

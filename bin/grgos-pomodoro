@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# grgos-pomodoro — a tiny Pomodoro timer that drives the Waybar custom module.
+#
+#   grgos-pomodoro status    print JSON for Waybar (text/tooltip/class)
+#   grgos-pomodoro toggle     start/pause the current phase
+#   grgos-pomodoro reset      stop and reset
+#   grgos-pomodoro skip       jump to the next phase
+#
+# Phases cycle: work(25m) -> break(5m) -> work -> ... every 4th break is long(15m).
+set -euo pipefail
+
+STATE_DIR="${XDG_RUNTIME_DIR:-/tmp}/grgos-pomodoro"
+mkdir -p "$STATE_DIR"
+STATE="${STATE_DIR}/state"
+
+WORK=$((25*60)); SHORT=$((5*60)); LONG=$((15*60))
+
+# state format:  phase running end_epoch remaining cycles
+load() {
+  if [[ -f "$STATE" ]]; then
+    # shellcheck disable=SC2046
+    read -r PHASE RUNNING END REMAIN CYCLES < "$STATE"
+  else
+    PHASE="work"; RUNNING=0; END=0; REMAIN=$WORK; CYCLES=0
+  fi
+}
+save() { printf '%s %s %s %s %s\n' "$PHASE" "$RUNNING" "$END" "$REMAIN" "$CYCLES" > "$STATE"; }
+
+phase_len() { case "$1" in work) echo $WORK;; long) echo $LONG;; *) echo $SHORT;; esac; }
+
+remaining_now() {
+  if [[ "$RUNNING" == "1" ]]; then
+    local now; now="$(date +%s)"
+    local r=$(( END - now ))
+    (( r < 0 )) && r=0
+    echo "$r"
+  else
+    echo "$REMAIN"
+  fi
+}
+
+advance_if_done() {
+  [[ "$RUNNING" == "1" ]] || return 0
+  local now; now="$(date +%s)"
+  (( now < END )) && return 0
+  # phase finished -> move on
+  command -v notify-send >/dev/null 2>&1 && \
+    notify-send "GrgOS Pomodoro" "$PHASE finished" -u critical || true
+  next_phase
+  RUNNING=0
+  REMAIN="$(phase_len "$PHASE")"
+  save
+}
+
+next_phase() {
+  case "$PHASE" in
+    work)
+      CYCLES=$(( CYCLES + 1 ))
+      if (( CYCLES % 4 == 0 )); then PHASE="long"; else PHASE="short"; fi ;;
+    *) PHASE="work" ;;
+  esac
+}
+
+cmd_status() {
+  load; advance_if_done
+  local r; r="$(remaining_now)"
+  local mm=$(( r / 60 )) ss=$(( r % 60 ))
+  local icon glyph cls
+  case "$PHASE" in
+    work) glyph=""; cls="work" ;;
+    long) glyph="";  cls="long" ;;
+    *)    glyph="";  cls="break" ;;
+  esac
+  [[ "$RUNNING" == "1" ]] && icon="$glyph" || icon="$glyph "
+  printf '{"text":"%s %02d:%02d","tooltip":"Pomodoro: %s (%d done) — click to start/pause","class":"%s"}\n' \
+    "$icon" "$mm" "$ss" "$PHASE" "$CYCLES" "$cls"
+}
+
+cmd_toggle() {
+  load; advance_if_done
+  if [[ "$RUNNING" == "1" ]]; then
+    REMAIN="$(remaining_now)"; RUNNING=0
+  else
+    local now; now="$(date +%s)"
+    END=$(( now + REMAIN )); RUNNING=1
+  fi
+  save
+  pkill -RTMIN+9 waybar 2>/dev/null || true
+}
+
+cmd_reset() { load; PHASE="work"; RUNNING=0; END=0; REMAIN=$WORK; CYCLES=0; save; pkill -RTMIN+9 waybar 2>/dev/null || true; }
+cmd_skip()  { load; next_phase; RUNNING=0; REMAIN="$(phase_len "$PHASE")"; save; pkill -RTMIN+9 waybar 2>/dev/null || true; }
+
+case "${1:-status}" in
+  status) cmd_status ;;
+  toggle) cmd_toggle ;;
+  reset)  cmd_reset ;;
+  skip)   cmd_skip ;;
+  *) echo "usage: grgos-pomodoro [status|toggle|reset|skip]" >&2; exit 2 ;;
+esac

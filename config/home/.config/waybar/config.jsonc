@@ -1,0 +1,87 @@
+// GrgOS — Waybar
+{
+  "layer": "top",
+  "position": "top",
+  "height": 36,
+  "spacing": 6,
+  "margin-top": 6,
+  "margin-left": 10,
+  "margin-right": 10,
+
+  "modules-left":   ["hyprland/workspaces", "hyprland/window"],
+  "modules-center": ["clock"],
+  "modules-right":  ["custom/pomodoro", "cpu", "memory", "temperature", "pulseaudio", "network", "bluetooth", "battery", "tray"],
+
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "on-click": "activate",
+    "format-icons": {
+      "1": "1", "2": "2", "3": "3", "4": "4", "5": "5",
+      "6": "6", "7": "7", "8": "8", "9": "9", "10": "0",
+      "default": ""
+    }
+  },
+
+  "hyprland/window": {
+    "format": "{title}",
+    "max-length": 60,
+    "separate-outputs": true
+  },
+
+  "clock": {
+    "format": "  {:%H:%M}   {:%a %d %b}",
+    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+    "calendar": { "weeks-pos": "right" }
+  },
+
+  "custom/pomodoro": {
+    "exec": "grgos-pomodoro status",
+    "return-type": "json",
+    "interval": 1,
+    "signal": 9,
+    "on-click": "grgos-pomodoro toggle",
+    "on-click-right": "grgos-pomodoro skip",
+    "on-click-middle": "grgos-pomodoro reset"
+  },
+
+  "cpu":    { "format": "  {usage}%", "interval": 2, "on-click": "kitty -e btop" },
+  "memory": { "format": "  {percentage}%", "interval": 2, "on-click": "kitty -e btop" },
+  "temperature": {
+    "critical-threshold": 82,
+    "format": "{icon} {temperatureC}°C",
+    "format-icons": ["", "", ""]
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": " muted",
+    "format-icons": { "default": ["", "", ""] },
+    "on-click": "pavucontrol",
+    "scroll-step": 5
+  },
+
+  "network": {
+    "format-wifi": "  {signalStrength}%",
+    "format-ethernet": "  wired",
+    "format-disconnected": "  offline",
+    "tooltip-format": "{ifname} · {ipaddr}",
+    "on-click": "kitty -e nmtui"
+  },
+
+  "bluetooth": {
+    "format": " ",
+    "format-disabled": "",
+    "format-connected": "  {num_connections}",
+    "on-click": "blueman-manager"
+  },
+
+  "battery": {
+    "states": { "warning": 30, "critical": 15 },
+    "format": "{icon} {capacity}%",
+    "format-charging": "  {capacity}%",
+    "format-plugged": "  {capacity}%",
+    "format-icons": ["", "", "", "", ""]
+  },
+
+  "tray": { "icon-size": 16, "spacing": 8 }
+}

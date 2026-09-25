@@ -1,0 +1,12 @@
+# GrgOS — Wofi launcher
+show=drun
+allow_images=true
+image_size=32
+prompt=Search…
+insensitive=true
+width=600
+height=460
+lines=8
+columns=1
+term=kitty
+gtk_dark=true

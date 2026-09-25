@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# grgos-preview — launch the Hyprland desktop from the live ISO for a quick look.
+#
+# NOTE: the live ISO logs in as root, and Hyprland warns against running as root.
+# This is fine for a *preview*. The polished, per-user desktop is what you get
+# after installing to disk (a normal user inherits /etc/skel).
+set -euo pipefail
+
+if [[ -n "${WAYLAND_DISPLAY:-}" ]]; then
+  echo "A Wayland session already seems to be running (WAYLAND_DISPLAY=$WAYLAND_DISPLAY)." >&2
+  exit 1
+fi
+
+# Seed the skel dotfiles into the current home so the preview looks right.
+if [[ -d /etc/skel ]]; then
+  cp -rn /etc/skel/. "$HOME"/ 2>/dev/null || true
+fi
+
+echo ">> Starting Hyprland preview. Super+Q closes a window, Super+M exits."
+echo ">> (Running as root is only for this live preview.)"
+sleep 1
+exec dbus-run-session Hyprland

@@ -1,0 +1,45 @@
+# GrgOS — Starship prompt
+add_newline = true
+format = """
+[](fg:#7aa2f7)\
+$directory\
+$git_branch$git_status\
+$python$nodejs$c\
+[](fg:#7aa2f7)\
+$cmd_duration
+$character"""
+
+[character]
+success_symbol = "[❯](bold #9ece6a)"
+error_symbol = "[❯](bold #f7768e)"
+
+[directory]
+style = "bg:#7aa2f7 fg:#1a1b26 bold"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+style = "bg:#414868 fg:#c0caf5"
+format = "[  $branch ]($style)"
+
+[git_status]
+style = "bg:#414868 fg:#e0af68"
+format = "[$all_status$ahead_behind ]($style)"
+
+[python]
+style = "bg:#bb9af7 fg:#1a1b26"
+format = "[  $version ]($style)"
+
+[nodejs]
+style = "bg:#9ece6a fg:#1a1b26"
+format = "[  $version ]($style)"
+
+[c]
+style = "bg:#7dcfff fg:#1a1b26"
+format = "[  $version ]($style)"
+
+[cmd_duration]
+min_time = 2000
+style = "fg:#565f89"
+format = "[ took $duration]($style)"

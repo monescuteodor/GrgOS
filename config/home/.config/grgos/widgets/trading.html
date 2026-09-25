@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GrgOS Trading Widget</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #0b0f1e;
+    color: #c0caf5;
+    font-family: "Inter", "JetBrainsMono Nerd Font", system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+  .grg-header {
+    padding: 10px 14px 4px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: #7aa2f7;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .grg-card {
+    margin: 8px 10px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(26, 27, 38, 0.6);
+    border: 1px solid rgba(122, 162, 247, 0.15);
+  }
+  .grg-card .tradingview-widget-container { height: 100%; }
+  .grg-chart { height: 320px; }
+  .grg-overview { height: 420px; }
+  .tradingview-widget-copyright { font-size: 10px; padding: 2px 8px; color: #565f89; }
+  .tradingview-widget-copyright a { color: #565f89; text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="grg-header">GrgOS · Markets</div>
+
+  <!-- Ticker tape -->
+  <div class="grg-card">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+      {
+        "symbols": [
+          {"proName": "BINANCE:BTCUSDT", "title": "BTC"},
+          {"proName": "BINANCE:ETHUSDT", "title": "ETH"},
+          {"proName": "FOREXCOM:SPXUSD", "title": "S&P 500"},
+          {"proName": "FOREXCOM:NSXUSD", "title": "Nasdaq"},
+          {"proName": "NASDAQ:AAPL", "title": "Apple"},
+          {"proName": "NASDAQ:TSLA", "title": "Tesla"},
+          {"proName": "FX:EURUSD", "title": "EUR/USD"}
+        ],
+        "showSymbolLogo": true,
+        "isTransparent": true,
+        "displayMode": "adaptive",
+        "colorTheme": "dark",
+        "locale": "en"
+      }
+      </script>
+    </div>
+  </div>
+
+  <!-- Advanced real-time chart -->
+  <div class="grg-card grg-chart">
+    <div class="tradingview-widget-container" style="height:100%;width:100%">
+      <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+      {
+        "autosize": true,
+        "symbol": "BINANCE:BTCUSDT",
+        "interval": "15",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "allow_symbol_change": true,
+        "backgroundColor": "rgba(11, 15, 30, 1)",
+        "gridColor": "rgba(122, 162, 247, 0.08)"
+      }
+      </script>
+    </div>
+  </div>
+
+  <!-- Market overview -->
+  <div class="grg-card grg-overview">
+    <div class="tradingview-widget-container" style="height:100%;width:100%">
+      <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+      {
+        "colorTheme": "dark",
+        "dateRange": "1D",
+        "showChart": true,
+        "locale": "en",
+        "isTransparent": true,
+        "showSymbolLogo": true,
+        "width": "100%",
+        "height": "100%",
+        "tabs": [
+          {
+            "title": "Crypto",
+            "symbols": [
+              {"s": "BINANCE:BTCUSDT", "d": "Bitcoin"},
+              {"s": "BINANCE:ETHUSDT", "d": "Ethereum"},
+              {"s": "BINANCE:SOLUSDT", "d": "Solana"}
+            ]
+          },
+          {
+            "title": "Indices",
+            "symbols": [
+              {"s": "FOREXCOM:SPXUSD", "d": "S&P 500"},
+              {"s": "FOREXCOM:NSXUSD", "d": "Nasdaq 100"},
+              {"s": "FOREXCOM:DJI", "d": "Dow 30"}
+            ]
+          },
+          {
+            "title": "Stocks",
+            "symbols": [
+              {"s": "NASDAQ:AAPL", "d": "Apple"},
+              {"s": "NASDAQ:NVDA", "d": "Nvidia"},
+              {"s": "NASDAQ:TSLA", "d": "Tesla"}
+            ]
+          }
+        ]
+      }
+      </script>
+    </div>
+  </div>
+
+  <div class="tradingview-widget-copyright">
+    <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">Charts by TradingView</a>
+  </div>
+</body>
+</html>

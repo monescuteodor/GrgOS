@@ -1,0 +1,21 @@
+# Force LF line endings for everything that runs under Linux.
+# This repo is authored on Windows but built/executed on Arch Linux — CRLF in a
+# shell script produces "bad interpreter: /bin/bash^M" errors.
+* text=auto eol=lf
+
+*.sh        text eol=lf
+*.bash      text eol=lf
+*.conf      text eol=lf
+*.jsonc     text eol=lf
+*.toml      text eol=lf
+*.css       text eol=lf
+*.ini       text eol=lf
+*.desktop   text eol=lf
+*.html      text eol=lf
+*.md        text eol=lf
+bin/*       text eol=lf
+
+# Binary assets (if any get added later)
+*.png       binary
+*.jpg       binary
+*.iso       binary

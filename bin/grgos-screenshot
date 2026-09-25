@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# grgos-screenshot — Wayland screenshots via grim + slurp.
+#   grgos-screenshot region   select a region  -> clipboard + ~/Pictures
+#   grgos-screenshot screen    whole output     -> clipboard + ~/Pictures
+set -euo pipefail
+
+mode="${1:-region}"
+outdir="${HOME}/Pictures/Screenshots"
+mkdir -p "$outdir"
+file="${outdir}/grgos-$(date +%Y%m%d-%H%M%S).png"
+
+case "$mode" in
+  region) grim -g "$(slurp)" "$file" ;;
+  screen) grim "$file" ;;
+  *) echo "usage: grgos-screenshot [region|screen]" >&2; exit 2 ;;
+esac
+
+wl-copy < "$file"
+command -v notify-send >/dev/null 2>&1 && \
+  notify-send "GrgOS Screenshot" "Saved & copied to clipboard\n$(basename "$file")" -i "$file" || true
+echo "$file"

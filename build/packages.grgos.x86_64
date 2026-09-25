@@ -1,0 +1,123 @@
+# =============================================================================
+#  GrgOS extra packages  (OFFICIAL REPOS ONLY)
+#  Merged on top of the archiso releng package list by build/build-iso.sh.
+#  AUR apps (google-chrome, cursor, slack-desktop, ...) are installed AFTER
+#  install by scripts/20-apps-aur.sh — they cannot be prebuilt into the ISO.
+# =============================================================================
+
+# --- Hyprland / Wayland desktop ---------------------------------------------
+hyprland
+hyprpaper
+hyprlock
+hypridle
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+qt5-wayland
+qt6-wayland
+xorg-xwayland
+polkit-gnome
+waybar
+wofi
+mako
+libnotify
+kitty
+thunar
+thunar-volman
+thunar-archive-plugin
+tumbler
+gvfs
+gvfs-mtp
+file-roller
+imv
+mpv
+grim
+slurp
+wl-clipboard
+cliphist
+brightnessctl
+playerctl
+pavucontrol
+network-manager-applet
+blueman
+swaybg
+
+# --- Fonts & theming ---------------------------------------------------------
+ttf-jetbrains-mono-nerd
+ttf-nerd-fonts-symbols
+ttf-nerd-fonts-symbols-mono
+noto-fonts
+noto-fonts-emoji
+noto-fonts-cjk
+inter-font
+papirus-icon-theme
+gnome-themes-extra
+kvantum
+qt5ct
+qt6ct
+imagemagick
+
+# --- Audio -------------------------------------------------------------------
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-jack
+wireplumber
+
+# --- Network / Bluetooth -----------------------------------------------------
+networkmanager
+bluez
+bluez-utils
+
+# --- Browser (live + web-app fallback; google-chrome via AUR post-install) ---
+chromium
+
+# --- Communication (native) --------------------------------------------------
+discord
+
+# --- Developer stack ---------------------------------------------------------
+base-devel
+git
+gcc
+clang
+lld
+cmake
+gdb
+make
+ninja
+pkgconf
+python
+python-pip
+python-pipx
+nodejs
+npm
+
+# --- CLI utilities -----------------------------------------------------------
+neovim
+btop
+fastfetch
+starship
+eza
+bat
+ripgrep
+fd
+fzf
+jq
+tree
+wget
+curl
+rsync
+unzip
+zip
+p7zip
+man-db
+man-pages
+less
+openssh
+zsh
+
+# --- Install tooling (present in releng, listed for clarity) -----------------
+archinstall
+arch-install-scripts
+sudo
+dosfstools
+e2fsprogs

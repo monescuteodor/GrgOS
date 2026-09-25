@@ -1,0 +1,76 @@
+/* GrgOS — Waybar (Tokyo Night-ish dark) */
+* {
+  font-family: "JetBrainsMono Nerd Font", "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+window#waybar {
+  background: transparent;
+  color: #c0caf5;
+}
+
+/* Rounded "island" look for each group */
+.modules-left,
+.modules-center,
+.modules-right {
+  background: rgba(26, 27, 38, 0.78);
+  border-radius: 14px;
+  padding: 0 6px;
+}
+
+#workspaces button {
+  padding: 0 8px;
+  margin: 4px 2px;
+  color: #565f89;
+  background: transparent;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+#workspaces button.active {
+  color: #1a1b26;
+  background: linear-gradient(135deg, #7aa2f7, #bb9af7);
+}
+#workspaces button:hover {
+  color: #c0caf5;
+  background: rgba(122, 162, 247, 0.2);
+}
+
+#window { color: #a9b1d6; padding: 0 10px; }
+
+#clock {
+  color: #7aa2f7;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+#custom-pomodoro,
+#cpu, #memory, #temperature, #pulseaudio,
+#network, #bluetooth, #battery, #tray {
+  padding: 0 10px;
+  margin: 4px 2px;
+  color: #c0caf5;
+}
+
+#custom-pomodoro.work  { color: #f7768e; }
+#custom-pomodoro.break { color: #9ece6a; }
+#custom-pomodoro.long  { color: #7dcfff; }
+
+#cpu        { color: #7dcfff; }
+#memory     { color: #bb9af7; }
+#temperature{ color: #e0af68; }
+#temperature.critical { color: #f7768e; }
+#pulseaudio { color: #7aa2f7; }
+#network    { color: #9ece6a; }
+#network.disconnected { color: #f7768e; }
+#bluetooth  { color: #7dcfff; }
+
+#battery.charging { color: #9ece6a; }
+#battery.warning:not(.charging)  { color: #e0af68; }
+#battery.critical:not(.charging) { color: #f7768e; }
+
+#tray { padding: 0 8px; }
+#tray menu { background: #1a1b26; color: #c0caf5; }

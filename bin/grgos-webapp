@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# grgos-webapp — open a URL (or local file) as a standalone "app" window.
+# Prefers Google Chrome, falls back to Chromium. Extra args pass through.
+#
+#   grgos-webapp https://chatgpt.com
+#   grgos-webapp --class grgos-trading file:///path/to/trading.html
+set -euo pipefail
+
+wm_class="grgos-webapp"
+if [[ "${1:-}" == "--class" ]]; then
+  wm_class="$2"; shift 2
+fi
+
+url="${1:-}"
+[[ -n "$url" ]] || { echo "usage: grgos-webapp [--class NAME] <url>" >&2; exit 2; }
+shift || true
+
+for browser in google-chrome-stable google-chrome chromium chromium-browser; do
+  if command -v "$browser" >/dev/null 2>&1; then
+    exec "$browser" \
+      --app="$url" \
+      --class="$wm_class" \
+      --ozone-platform-hint=auto \
+      --new-window \
+      "$@"
+  fi
+done
+
+echo "grgos-webapp: no Chrome/Chromium found. Install google-chrome (scripts/20-apps-aur.sh) or chromium." >&2
+exit 1
