@@ -112,15 +112,15 @@ assemble_profile() {
   mkdir -p "${PROFILE_DIR}/airootfs/etc/skel"
   rsync -a "${REPO_ROOT}/config/home/" "${PROFILE_DIR}/airootfs/etc/skel/"
 
-  # 4b) Brand the system identity (os-release / hostname / issue) as GrgOS.
-  log "Installing GrgOS system identity (os-release, hostname, issue)"
-  install -Dm0644 "${REPO_ROOT}/config/system/os-release" "${PROFILE_DIR}/airootfs/usr/lib/os-release"
-  install -Dm0644 "${REPO_ROOT}/config/system/hostname"   "${PROFILE_DIR}/airootfs/etc/hostname"
-  install -Dm0644 "${REPO_ROOT}/config/system/issue"      "${PROFILE_DIR}/airootfs/etc/issue"
-  # The 'filesystem' package also ships /usr/lib/os-release, which would collide
-  # with ours during pacstrap ("exists in filesystem"). Tell pacman not to
-  # extract the packaged copy so the GrgOS identity wins instead.
-  sed -i '/^\[options\]/a NoExtract = usr/lib/os-release' "${PROFILE_DIR}/pacman.conf"
+  # 4b) Brand the system identity (hostname / issue) as GrgOS.
+  #     os-release is NOT shipped as a file here: the 'filesystem' package owns
+  #     /usr/lib/os-release, so pre-placing it aborts pacstrap with a file
+  #     conflict (and NoExtract does not suppress that check). Instead, a pacman
+  #     hook (build/overlay/.../00-grgos-osrelease.hook) rewrites os-release to
+  #     the GrgOS version right after 'filesystem' installs, from the payload.
+  log "Installing GrgOS system identity (hostname, issue)"
+  install -Dm0644 "${REPO_ROOT}/config/system/hostname" "${PROFILE_DIR}/airootfs/etc/hostname"
+  install -Dm0644 "${REPO_ROOT}/config/system/issue"    "${PROFILE_DIR}/airootfs/etc/issue"
 
   # 5) Copy helper commands into /usr/local/bin.
   log "Installing helper commands into /usr/local/bin"

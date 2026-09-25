@@ -1,0 +1,15 @@
+# GrgOS — rebrand /usr/lib/os-release after the 'filesystem' package installs.
+# We can't ship os-release as a plain airootfs file: it's owned by the
+# 'filesystem' package, so pacstrap would abort with a file conflict. Instead
+# we let filesystem install its copy, then overwrite it (PostTransaction) from
+# the GrgOS payload that is bundled read-only in the image.
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = filesystem
+
+[Action]
+Description = Applying GrgOS identity (os-release)...
+When = PostTransaction
+Exec = /bin/sh -c 'cp -f /usr/local/share/grgos/config/system/os-release /usr/lib/os-release 2>/dev/null || true'
