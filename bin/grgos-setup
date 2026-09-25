@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# grgos-setup — finish/refresh GrgOS provisioning (wrapper around install.sh).
+# Runs as your normal user; install.sh escalates with sudo where needed.
+exec bash /usr/local/share/grgos/scripts/install.sh "$@"

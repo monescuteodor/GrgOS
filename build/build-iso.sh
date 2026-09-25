@@ -117,6 +117,10 @@ assemble_profile() {
   install -Dm0644 "${REPO_ROOT}/config/system/os-release" "${PROFILE_DIR}/airootfs/usr/lib/os-release"
   install -Dm0644 "${REPO_ROOT}/config/system/hostname"   "${PROFILE_DIR}/airootfs/etc/hostname"
   install -Dm0644 "${REPO_ROOT}/config/system/issue"      "${PROFILE_DIR}/airootfs/etc/issue"
+  # The 'filesystem' package also ships /usr/lib/os-release, which would collide
+  # with ours during pacstrap ("exists in filesystem"). Tell pacman not to
+  # extract the packaged copy so the GrgOS identity wins instead.
+  sed -i '/^\[options\]/a NoExtract = usr/lib/os-release' "${PROFILE_DIR}/pacman.conf"
 
   # 5) Copy helper commands into /usr/local/bin.
   log "Installing helper commands into /usr/local/bin"

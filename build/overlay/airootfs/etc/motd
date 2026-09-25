@@ -6,20 +6,20 @@
   \____|_|  \__, |  \___/|____/
             |___/    live environment
 
- Welcome to the GrgOS live ISO.
+ Welcome to the GrgOS live medium.
 
-   grgos-preview     Preview the Hyprland desktop right now (runs as root; for a
-                     quick look only — the real setup happens after install).
+   grgos-preview     Preview the Hyprland desktop right now (quick look).
 
-   grgos-install     Install GrgOS to disk. This launches archinstall (pick your
-                     disk, user and password), then seeds the GrgOS provisioning
-                     payload onto the new system.
+   grgos-install     Install GrgOS to disk. The GrgOS installer lets you pick:
+                       Desktop  — Hyprland GUI + AI/productivity/trading
+                       Security — terminal only, BlackArch ethical-hacking arsenal
+                     It sets everything up as GrgOS (bootloader, identity, user).
 
- After installing and rebooting, log in and run:
+ After it finishes: reboot, you're logged in automatically, then run
 
-   /usr/local/share/grgos/scripts/install.sh
+   grgos-setup
 
- to pull in the AI / work / trading apps, web-app shortcuts and theming.
+ to pull the remaining apps (Desktop) or the full BlackArch toolset (Security).
 
- Docs & source:  https://github.com/monescuteodor/GrgOS
+ Source:  https://github.com/monescuteodor/GrgOS
 

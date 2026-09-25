@@ -1,20 +1,28 @@
 # 03 · Install GrgOS & customize
 
-You've booted the GrgOS ISO (on hardware or in a VM). This is a two-stage install:
-lay down a minimal Arch base, then let GrgOS provision the desktop and apps.
+You've booted the GrgOS medium (on hardware or in a VM). GrgOS ships in two editions,
+chosen during install:
+
+- **Desktop** — the Hyprland GUI with AI, productivity and trading apps.
+- **Security** — a **terminal-only** environment (no GUI) that greets you with the
+  GrgOS ASCII banner and carries the **BlackArch** ethical-hacking arsenal
+  (2800+ tools — more than Kali). *For authorized testing only.*
+
+Install is two stages: the GrgOS installer lays down the branded base system, then
+`grgos-setup` pulls the network-heavy extras on first boot. **Nothing ever shows
+"Arch"** — GrgOS has its own installer (not archinstall) and its own identity.
 
 ---
 
 ## 1. (Optional) Preview first
 
-At the live root prompt:
+At the live prompt:
 
 ```bash
 grgos-preview
 ```
 
-This starts the Hyprland desktop so you can look around. It runs as root (fine for
-a preview only). `Super+M` exits back to the prompt.
+This starts the Hyprland desktop so you can look around. `Super+M` exits.
 
 ## 2. Install to disk
 
@@ -22,43 +30,41 @@ a preview only). `Super+M` exits back to the prompt.
 grgos-install
 ```
 
-This launches **archinstall**. Suggested answers:
+The GrgOS installer walks you through:
 
-- **Mirror region** – your country (faster downloads)
-- **Disk** – select the target; *Best-effort partition* is easiest
-- **Bootloader** – systemd-boot (or GRUB)
-- **Profile** – **Minimal** (GrgOS brings its own desktop — do **not** pick a DE)
-- **Audio** – Pipewire
-- **Network** – **NetworkManager** ← important, you need this for the apps
-- **Additional packages** – leave empty (already baked into the ISO)
-- **Users** – create a normal user, give it **sudo**
+- **Edition** – Desktop or Security
+- **Target disk** – it lists them; you confirm by typing `YES` (the disk is erased)
+- **Hostname / user / passwords / timezone**
 
-When archinstall finishes, `grgos-install` seeds the GrgOS provisioning payload onto
-the new system. Reboot and remove the USB.
+It detects UEFI vs BIOS, partitions (ext4 root), installs the base system, sets up
+**GRUB titled "GrgOS"**, creates your sudo user, writes the GrgOS identity, and copies
+the GrgOS payload. Then `reboot` and remove the USB.
 
-> If archinstall unmounts the target before seeding, mount your new root at `/mnt`
-> and run `grgos-install --seed-only`.
+> Networking is required. On Wi-Fi, connect first with `iwctl` (`station wlan0 connect <SSID>`).
 
 ## 3. First login → finish provisioning
 
-Log in as your user on the console. Then:
+You're logged in automatically. Finish setup with:
 
 ```bash
-bash /usr/local/share/grgos/scripts/install.sh
+grgos-setup
 ```
 
-This installs the dev stack, AI/work/trading apps and web-app shortcuts, applies the
-dark theme, enables NetworkManager/Bluetooth, and sets up autologin into Hyprland.
+- **Desktop**: installs AUR apps (Chrome, Cursor, Slack), web-app shortcuts, trading
+  widget and the dark theme, then boots into Hyprland.
+- **Security**: enables BlackArch and installs the full ethical-hacking toolset.
 
 Useful flags:
 
 ```bash
-install.sh --minimal        # skip AUR apps (no chrome/cursor/slack build)
-install.sh --no-autologin   # keep a normal console login
-install.sh --yes            # no prompts
+grgos-setup --desktop        # force the desktop edition
+grgos-setup --security       # force the security (terminal) edition
+grgos-setup --minimal        # (desktop) skip AUR apps
+grgos-setup --no-autologin   # keep a plain console login
+grgos-setup --yes            # no prompts
 ```
 
-Reboot (or `Super+M` then log in) and you're in GrgOS. 🎉
+Reboot and you're in GrgOS. 🎉  (Desktop → Hyprland; Security → GrgOS terminal.)
 
 **Key bindings**
 

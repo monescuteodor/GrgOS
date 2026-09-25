@@ -115,9 +115,11 @@ less
 openssh
 zsh
 
-# --- Install tooling (present in releng, listed for clarity) -----------------
-archinstall
+# --- Install tooling (used by the GrgOS installer) ---------------------------
+# NOTE: we do NOT ship archinstall — GrgOS has its own branded installer
+# (grgos-install) so nothing ever displays "Arch" during installation.
 arch-install-scripts
+gptfdisk
 sudo
 dosfstools
 e2fsprogs

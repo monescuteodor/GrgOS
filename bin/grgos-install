@@ -1,75 +1,265 @@
 #!/usr/bin/env bash
-# grgos-install — install GrgOS to disk.
+# =============================================================================
+#  grgos-install — GrgOS guided installer
+# -----------------------------------------------------------------------------
+#  A self-contained installer (replaces archinstall) so the whole install
+#  experience is branded GrgOS — no "Arch" shown anywhere. Handles UEFI or BIOS,
+#  a single target disk, ext4 root, GRUB (titled GrgOS), a sudo user, GrgOS
+#  identity, and the choice of edition:
 #
-# Stage 1: run archinstall (interactive) to lay down a minimal Arch system.
-# Stage 2: copy the GrgOS provisioning payload onto the freshly installed
-#          system so that, after first boot, the user just runs:
-#              sudo /usr/local/share/grgos/scripts/install.sh
+#     Desktop   Hyprland GUI + AI/productivity/trading
+#     Security  terminal-only, GrgOS ASCII, BlackArch ethical-hacking arsenal
 #
-# Run this from the GrgOS live ISO (as root).
+#  The heavier, network-dependent parts (AUR apps, BlackArch tools) are pulled
+#  on first boot with `grgos-setup`. Run this from the GrgOS live medium as root.
+# =============================================================================
 set -euo pipefail
 
 PAYLOAD_SRC="/usr/local/share/grgos"
-TARGET="/mnt"
+TARGET=/mnt
 
-c_grn=$'\e[1;32m'; c_ylw=$'\e[1;33m'; c_red=$'\e[1;31m'; c_rst=$'\e[0m'
-ok()   { printf '%s==>%s %s\n' "$c_grn" "$c_rst" "$*"; }
-warn() { printf '%s!!%s %s\n'  "$c_ylw" "$c_rst" "$*" >&2; }
-die()  { printf '%serror%s %s\n' "$c_red" "$c_rst" "$*" >&2; exit 1; }
+c_b=$'\e[1;34m'; c_g=$'\e[1;32m'; c_y=$'\e[1;33m'; c_r=$'\e[1;31m'; c_x=$'\e[0m'
+log(){ printf '%s==>%s %s\n' "$c_b" "$c_x" "$*"; }
+ok(){  printf '%s ✓%s %s\n' "$c_g" "$c_x" "$*"; }
+warn(){ printf '%s!!%s %s\n' "$c_y" "$c_x" "$*" >&2; }
+die(){ printf '%serror%s %s\n' "$c_r" "$c_x" "$*" >&2; exit 1; }
 
-[[ $EUID -eq 0 ]] || die "Run as root."
-command -v archinstall >/dev/null 2>&1 || die "archinstall not found on this ISO."
+banner() {
+cat <<'EOF'
 
-cat <<'BANNER'
-============================================================
-  GrgOS installer
-------------------------------------------------------------
-  archinstall will now open. Suggested choices:
-    - Profile:   Minimal   (GrgOS supplies its own desktop)
-    - Audio:     Pipewire
-    - Network:   NetworkManager   (IMPORTANT: enable this)
-    - Additional packages: leave empty (already in the ISO)
-    - Create a normal user and give it sudo.
-  When archinstall finishes, DO NOT reboot yet if it asks —
-  choose to keep the installation mounted so GrgOS can seed
-  itself. If it unmounts, this script will remount and seed.
-============================================================
-BANNER
-read -r -p "Press Enter to launch archinstall..." _
-
-archinstall || die "archinstall exited with an error."
-
-# Try to locate the target root. archinstall usually mounts it at /mnt.
-if ! mountpoint -q "$TARGET"; then
-  warn "$TARGET is not mounted. If archinstall already unmounted the target,"
-  warn "mount your new root at $TARGET and re-run:  grgos-install --seed-only"
-  [[ "${1:-}" == "--seed-only" ]] || exit 0
-fi
-
-seed() {
-  ok "Seeding GrgOS payload into the installed system"
-  install -d "${TARGET}/usr/local/share"
-  rsync -a "$PAYLOAD_SRC" "${TARGET}/usr/local/share/"
-  install -d "${TARGET}/usr/local/bin"
-  install -m0755 "${PAYLOAD_SRC}"/bin/* "${TARGET}/usr/local/bin/" 2>/dev/null || true
-
-  # Drop a first-login hint.
-  cat > "${TARGET}/etc/motd" <<'EOF'
-
-  GrgOS is installed. Finish provisioning with:
-
-      sudo /usr/local/share/grgos/scripts/install.sh
-
-  (Installs AI/work/trading apps, web-app shortcuts and theming.)
+   ____              ___  ____
+  / ___|_ __ __ _   / _ \/ ___|
+ | |  _| '__/ _` | | | | \___ \
+ | |_| | | | (_| | | |_| |___) |
+  \____|_|  \__, |  \___/|____/
+            |___/     i n s t a l l e r
 
 EOF
-  ok "Payload seeded."
-  echo
-  ok "Done. Reboot, log in as your user, and run:"
-  echo "     sudo /usr/local/share/grgos/scripts/install.sh"
 }
 
-if [[ "${1:-}" == "--seed-only" ]]; then
-  mountpoint -q "$TARGET" || die "Mount the target root at $TARGET first."
+[[ $EUID -eq 0 ]] || die "Run as root."
+banner
+
+# ---- network check ----------------------------------------------------------
+log "Checking internet connection"
+if ! ping -c1 -W3 geo.mirror.pkgbuild.com >/dev/null 2>&1 && ! ping -c1 -W3 1.1.1.1 >/dev/null 2>&1; then
+  warn "No internet detected. Connect first:"
+  warn "  Wi-Fi:  iwctl   (station wlan0 connect <SSID>)"
+  warn "  Wired:  usually automatic via NetworkManager"
+  die  "Networking is required to install."
 fi
-seed
+ok "Online"
+
+# ---- edition ----------------------------------------------------------------
+echo; echo "Choose the GrgOS edition to install:"
+echo "  1) Desktop   — Hyprland GUI, AI + productivity + trading"
+echo "  2) Security  — terminal only, GrgOS ASCII, BlackArch ethical-hacking arsenal"
+read -r -p "Edition [1/2] (default 1): " _ed
+case "$_ed" in 2|s|S|sec|security|hack|hacking) EDITION=security ;; *) EDITION=desktop ;; esac
+ok "Edition: $EDITION"
+
+# ---- firmware mode ----------------------------------------------------------
+if [[ -d /sys/firmware/efi/efivars ]]; then FW=uefi; else FW=bios; fi
+ok "Firmware: ${FW^^}"
+
+# ---- disk selection ---------------------------------------------------------
+echo; log "Available disks:"
+lsblk -dpno NAME,SIZE,MODEL | grep -vE 'loop|sr0|/dev/ram' || true
+echo
+read -r -p "Target disk to ERASE (e.g. /dev/sda or /dev/nvme0n1): " DISK
+[[ -b "$DISK" ]] || die "Not a block device: $DISK"
+echo
+warn "EVERYTHING on $DISK WILL BE PERMANENTLY ERASED."
+lsblk "$DISK"
+read -r -p "Type exactly YES to continue: " confirm
+[[ "$confirm" == "YES" ]] || die "Aborted."
+
+# partition suffix: nvme0n1 -> nvme0n1p1 ; sda -> sda1
+part() { case "$DISK" in *[0-9]) echo "${DISK}p$1";; *) echo "${DISK}$1";; esac; }
+
+# ---- system details ---------------------------------------------------------
+echo
+read -r -p "Hostname (default grgos): " HOSTN; HOSTN="${HOSTN:-grgos}"
+read -r -p "Your username: " USERNAME
+[[ "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]] || die "Invalid username."
+read -r -p "Timezone (default Europe/Bucharest): " TZ; TZ="${TZ:-Europe/Bucharest}"
+[[ -f "/usr/share/zoneinfo/$TZ" ]] || { warn "Unknown timezone, using UTC"; TZ=UTC; }
+LOCALE="en_US.UTF-8"
+
+read -rs -p "Password for $USERNAME: " USERPW; echo
+read -rs -p "Repeat: " USERPW2; echo
+[[ "$USERPW" == "$USERPW2" && -n "$USERPW" ]] || die "Passwords do not match / empty."
+read -rs -p "Root password: " ROOTPW; echo
+read -rs -p "Repeat: " ROOTPW2; echo
+[[ "$ROOTPW" == "$ROOTPW2" && -n "$ROOTPW" ]] || die "Passwords do not match / empty."
+
+echo; log "Summary:"
+echo "  Edition:   $EDITION"
+echo "  Disk:      $DISK  ($FW)"
+echo "  Hostname:  $HOSTN"
+echo "  User:      $USERNAME (sudo)"
+echo "  Timezone:  $TZ    Locale: $LOCALE"
+read -r -p "Proceed with installation? Type YES: " go
+[[ "$go" == "YES" ]] || die "Aborted."
+
+# ---- partition + format -----------------------------------------------------
+log "Partitioning $DISK"
+sgdisk -Z "$DISK" >/dev/null
+if [[ "$FW" == uefi ]]; then
+  sgdisk -n1:0:+1G  -t1:ef00 -c1:GRGOS_EFI  "$DISK" >/dev/null
+  sgdisk -n2:0:0    -t2:8300 -c2:GRGOS_ROOT "$DISK" >/dev/null
+  EFI_PART="$(part 1)"; ROOT_PART="$(part 2)"
+  mkfs.fat -F32 -n GRGOS_EFI "$EFI_PART" >/dev/null
+else
+  sgdisk -n1:0:+1M  -t1:ef02 -c1:BIOS_BOOT  "$DISK" >/dev/null
+  sgdisk -n2:0:0    -t2:8300 -c2:GRGOS_ROOT "$DISK" >/dev/null
+  ROOT_PART="$(part 2)"
+fi
+partprobe "$DISK" 2>/dev/null || true; sleep 1
+mkfs.ext4 -F -L GRGOS_ROOT "$ROOT_PART" >/dev/null
+ok "Filesystems created"
+
+log "Mounting"
+mount "$ROOT_PART" "$TARGET"
+if [[ "$FW" == uefi ]]; then mkdir -p "$TARGET/boot"; mount "$EFI_PART" "$TARGET/boot"; fi
+
+# ---- package sets -----------------------------------------------------------
+BASE=(base base-devel linux linux-firmware sudo networkmanager grub efibootmgr
+      git python python-pip python-pipx nodejs npm gcc clang lld cmake ninja gdb
+      make pkgconf neovim vim btop fastfetch starship eza bat ripgrep fd fzf jq
+      tree wget curl rsync unzip zip p7zip man-db man-pages less openssh zsh
+      bash-completion pciutils usbutils which nano dosfstools e2fsprogs)
+
+DESKTOP=(hyprland hyprpaper hyprlock hypridle xdg-desktop-portal-hyprland
+      xdg-desktop-portal-gtk qt5-wayland qt6-wayland xorg-xwayland polkit-gnome
+      waybar wofi mako libnotify kitty thunar thunar-volman thunar-archive-plugin
+      tumbler gvfs gvfs-mtp file-roller imv mpv grim slurp wl-clipboard cliphist
+      brightnessctl playerctl pavucontrol network-manager-applet blueman swaybg
+      ttf-jetbrains-mono-nerd ttf-nerd-fonts-symbols ttf-nerd-fonts-symbols-mono
+      noto-fonts noto-fonts-emoji noto-fonts-cjk inter-font papirus-icon-theme
+      gnome-themes-extra kvantum qt5ct qt6ct imagemagick pipewire pipewire-alsa
+      pipewire-pulse pipewire-jack wireplumber bluez bluez-utils chromium discord)
+
+# Security edition gets an official-repo starter toolkit now; the full BlackArch
+# arsenal is added on first boot by scripts/60-security.sh (grgos-setup).
+SECTOOLS=(nmap wireshark-qt tcpdump sqlmap nikto gobuster john hashcat hydra
+      aircrack-ng radare2 binwalk whois proxychains-ng tor macchanger socat
+      openbsd-netcat nmap net-tools)
+
+PKGS=("${BASE[@]}")
+if [[ "$EDITION" == desktop ]]; then PKGS+=("${DESKTOP[@]}"); else PKGS+=("${SECTOOLS[@]}"); fi
+
+log "Installing the base system (pacstrap) — this downloads packages, please wait"
+pacstrap -K "$TARGET" "${PKGS[@]}"
+ok "Base system installed"
+
+log "Generating fstab"
+genfstab -U "$TARGET" >> "$TARGET/etc/fstab"
+
+# ---- copy the GrgOS payload onto the target ---------------------------------
+log "Copying GrgOS provisioning payload"
+install -d "$TARGET/usr/local/share"
+rsync -a "$PAYLOAD_SRC" "$TARGET/usr/local/share/"
+install -d "$TARGET/usr/local/bin"
+install -m0755 "$PAYLOAD_SRC"/bin/* "$TARGET/usr/local/bin/" 2>/dev/null || true
+echo "$EDITION" > "$TARGET/etc/grgos-edition"
+
+# ---- in-chroot configuration ------------------------------------------------
+log "Configuring the installed system (chroot)"
+cat > "$TARGET/root/grgos-chroot.sh" <<CHROOT
+#!/usr/bin/env bash
+set -euo pipefail
+
+# time / locale
+ln -sf "/usr/share/zoneinfo/$TZ" /etc/localtime
+hwclock --systohc || true
+echo "$LOCALE UTF-8" >> /etc/locale.gen
+locale-gen
+echo "LANG=$LOCALE" > /etc/locale.conf
+
+# identity (GrgOS everywhere)
+echo "$HOSTN" > /etc/hostname
+cat > /etc/hosts <<HOSTS
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   $HOSTN.localdomain $HOSTN
+HOSTS
+install -Dm0644 /usr/local/share/grgos/config/system/os-release /usr/lib/os-release
+cp -f /usr/local/share/grgos/config/system/os-release /etc/os-release
+[[ -f /usr/local/share/grgos/config/system/issue ]] && cp -f /usr/local/share/grgos/config/system/issue /etc/issue || true
+if [[ "$EDITION" == security ]]; then
+  cp -f /usr/local/share/grgos/config/system/motd.security /etc/motd 2>/dev/null || true
+  sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="GrgOS Security"/' /etc/os-release /usr/lib/os-release 2>/dev/null || true
+else
+  cp -f /usr/local/share/grgos/config/system/motd /etc/motd 2>/dev/null || true
+fi
+
+# initramfs (safety; pacstrap runs it via hook already)
+mkinitcpio -P || true
+
+# user + sudo
+useradd -m -G wheel -s /bin/bash "$USERNAME"
+install -d /etc/sudoers.d
+echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel
+chmod 440 /etc/sudoers.d/10-wheel
+
+# bootloader — GRUB titled "GrgOS" (no "Arch")
+if [[ "$FW" == uefi ]]; then
+  grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GrgOS
+else
+  grub-install --target=i386-pc "$DISK"
+fi
+sed -i 's/^#\?GRUB_DISTRIBUTOR=.*/GRUB_DISTRIBUTOR="GrgOS"/' /etc/default/grub
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# services
+systemctl enable NetworkManager
+
+# dotfiles into skel + the new user's home
+rsync -a /usr/local/share/grgos/config/home/ /etc/skel/
+if [[ "$EDITION" == desktop ]]; then
+  rsync -a /usr/local/share/grgos/config/home/ "/home/$USERNAME/"
+else
+  # terminal-only: shell rc + fastfetch (GrgOS ascii), but NO Hyprland autostart
+  install -d "/home/$USERNAME/.config"
+  cp -f /usr/local/share/grgos/config/home/.bashrc "/home/$USERNAME/.bashrc"
+  [[ -f /usr/local/share/grgos/config/home/.config/starship.toml ]] && \
+    install -Dm0644 /usr/local/share/grgos/config/home/.config/starship.toml "/home/$USERNAME/.config/starship.toml"
+  cp -a /usr/local/share/grgos/config/home/.config/fastfetch "/home/$USERNAME/.config/" 2>/dev/null || true
+  printf '%s\n' '[[ -f ~/.bashrc ]] && . ~/.bashrc' > "/home/$USERNAME/.bash_profile"
+fi
+chown -R "$USERNAME:$USERNAME" "/home/$USERNAME"
+
+# autologin: desktop -> Hyprland (from .bash_profile); security -> console
+install -d /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<GETTY
+[Service]
+ExecStart=
+ExecStart=-/usr/bin/agetty --autologin $USERNAME --noclear %I \\\$TERM
+GETTY
+CHROOT
+
+arch-chroot "$TARGET" bash /root/grgos-chroot.sh
+rm -f "$TARGET/root/grgos-chroot.sh"
+
+# passwords (piped, never written to disk)
+printf 'root:%s\n' "$ROOTPW"          | arch-chroot "$TARGET" chpasswd
+printf '%s:%s\n' "$USERNAME" "$USERPW" | arch-chroot "$TARGET" chpasswd
+ok "System configured"
+
+# ---- done -------------------------------------------------------------------
+sync
+cat <<DONE
+
+$c_g============================================================$c_x
+  GrgOS installed successfully ($EDITION edition).
+
+  Reboot and remove the installation medium:
+      reboot
+
+  You'll be logged in automatically. Then finish setup with:
+      grgos-setup
+  (Desktop: pulls Chrome/Cursor + applies the desktop.
+   Security: adds the full BlackArch ethical-hacking arsenal.)
+$c_g============================================================$c_x
+DONE

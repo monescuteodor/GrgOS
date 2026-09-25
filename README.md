@@ -34,6 +34,20 @@ dark theme — no bloatware.
 
 ---
 
+## Editions
+
+GrgOS is built **on** Arch (like Kali is built on Debian) but is branded GrgOS
+everywhere — boot menu, installer, `os-release`, hostname, login banner. The GrgOS
+installer chooses one of two editions:
+
+| Edition | What it is |
+|---|---|
+| **Desktop** | The full Hyprland GUI above — AI, productivity, trading. |
+| **Security** | **Terminal-only** (no GUI). Boots to a console with the GrgOS ASCII banner and the **BlackArch** arsenal — **2800+ ethical-hacking tools**, more than Kali. Add tool groups with `pacman -S blackarch-<category>`. |
+
+> ⚖️ The Security edition is for **authorized** penetration testing, CTFs, labs,
+> research and education only — systems you own or have written permission to test.
+
 ## Repository layout
 
 ```

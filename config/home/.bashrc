@@ -37,7 +37,6 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias gs='git status'
 alias gl='git log --oneline --graph --decorate --all'
-alias grgos-setup='sudo /usr/local/share/grgos/scripts/install.sh'
 
 # ---- prompt (starship) ------------------------------------------------------
 if command -v starship >/dev/null 2>&1; then
