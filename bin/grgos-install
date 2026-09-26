@@ -50,6 +50,14 @@ if ! ping -c1 -W3 geo.mirror.pkgbuild.com >/dev/null 2>&1 && ! ping -c1 -W3 1.1.
 fi
 ok "Online"
 
+# Refresh to fast, up-to-date mirrors so pacstrap doesn't stall on slow ones.
+if command -v reflector >/dev/null 2>&1; then
+  log "Selecting fast mirrors (reflector) — a few seconds"
+  reflector --protocol https --latest 20 --sort rate \
+    --save /etc/pacman.d/mirrorlist 2>/dev/null \
+    || warn "reflector failed; keeping the current mirrorlist"
+fi
+
 # ---- edition ----------------------------------------------------------------
 echo; echo "Choose the GrgOS edition to install:"
 echo "  1) Desktop   — Hyprland GUI, AI + productivity + trading"
@@ -103,6 +111,7 @@ read -r -p "Proceed with installation? Type YES: " go
 [[ "$go" == "YES" ]] || die "Aborted."
 
 # ---- partition + format -----------------------------------------------------
+umount -R "$TARGET" 2>/dev/null || true   # clean up any previous failed run
 log "Partitioning $DISK"
 sgdisk -Z "$DISK" >/dev/null
 if [[ "$FW" == uefi ]]; then
@@ -150,7 +159,18 @@ PKGS=("${BASE[@]}")
 if [[ "$EDITION" == desktop ]]; then PKGS+=("${DESKTOP[@]}"); else PKGS+=("${SECTOOLS[@]}"); fi
 
 log "Installing the base system (pacstrap) — this downloads packages, please wait"
-pacstrap -K "$TARGET" "${PKGS[@]}"
+# Retry to ride out transient network hiccups / slow mirrors.
+tries=0
+until pacstrap -K "$TARGET" "${PKGS[@]}"; do
+  tries=$((tries+1))
+  if [[ $tries -ge 3 ]]; then
+    die "pacstrap failed after $tries attempts. Your connection or mirrors are unstable.
+   Check the network (ping archlinux.org), optionally refresh mirrors with
+   'reflector --latest 20 --sort rate --save /etc/pacman.d/mirrorlist', then re-run grgos-install."
+  fi
+  warn "pacstrap failed (attempt $tries/3) — likely a network blip. Retrying in 5s…"
+  sleep 5
+done
 ok "Base system installed"
 
 log "Generating fstab"
