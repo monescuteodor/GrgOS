@@ -23,10 +23,12 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${HERE}/lib.sh"
 
 ROOT="$(grgos_root)"
-DO_AUR=1; DO_AUTOLOGIN=1; ASSUME_YES=0; EDITION=""
+DO_AUR=1; DO_AUTOLOGIN=1; ASSUME_YES=0; EDITION=""; DO_AI=1
 for a in "$@"; do
   case "$a" in
-    --minimal|--no-aur) DO_AUR=0 ;;
+    --minimal) DO_AUR=0; DO_AI=0 ;;
+    --no-aur) DO_AUR=0 ;;
+    --no-ai) DO_AI=0 ;;
     --no-autologin) DO_AUTOLOGIN=0 ;;
     --yes|-y) ASSUME_YES=1 ;;
     --security|--hacking) EDITION=security ;;
@@ -94,6 +96,7 @@ if [[ "$EDITION" == desktop ]]; then
 else
   log "Installing terminal dotfiles (Security edition — no desktop autostart)"
   put ".bashrc"
+  put ".tmux.conf"
   put ".config/starship.toml"
   put ".config/fastfetch/config.jsonc"
   put ".config/fastfetch/grgos.txt"
@@ -141,12 +144,17 @@ if [[ "$EDITION" == desktop ]]; then
   bash "${HERE}/30-webapps.sh" --apps-dir "$HOME/.local/share/applications"
   bash "${HERE}/40-trading.sh"
   bash "${HERE}/50-theming.sh"
+  [[ $DO_AI == 1 ]] && { bash "${HERE}/75-ai.sh" || warn "AI setup had issues"; }
   if have xdg-settings; then
     if have google-chrome-stable; then xdg-settings set default-web-browser google-chrome.desktop 2>/dev/null || true
     elif have chromium;          then xdg-settings set default-web-browser chromium.desktop 2>/dev/null || true; fi
   fi
 else
-  bash "${HERE}/60-security.sh"
+  # Security edition: tools + privacy hardening + server-ready + local AI
+  bash "${HERE}/60-security.sh"  || warn "security tools had issues"
+  bash "${HERE}/65-hardening.sh" || warn "hardening had issues"
+  bash "${HERE}/70-server.sh"    || warn "server setup had issues"
+  [[ $DO_AI == 1 ]] && { bash "${HERE}/75-ai.sh" || warn "AI setup had issues"; }
 fi
 
 # ---- 6) autologin -----------------------------------------------------------
@@ -179,7 +187,11 @@ else
 ============================================================
   GrgOS Security is ready. 🔓  Reboot -> GrgOS terminal.
 
-  BlackArch is enabled. Browse tools:  pacman -Sg | grep blackarch
+  Tools:    BlackArch enabled ->  pacman -Sg | grep blackarch
+  Private:  firewall on, MAC randomized, encrypted DNS, SSH hardened,
+            fail2ban active.  Anonymize: torsocks <cmd>
+  Server:   SSH + Docker enabled.  Persistent shells: tmux
+  AI:       local & offline ->  ollama run llama3.2
   Reminder: AUTHORIZED testing only.
 ============================================================
 DONE

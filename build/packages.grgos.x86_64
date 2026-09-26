@@ -91,6 +91,15 @@ python-pipx
 nodejs
 npm
 
+# --- Drivers / kernel modules (so out-of-tree Wi-Fi drivers build OOTB) -------
+linux-headers
+dkms
+
+# --- Privacy / network hardening (used mainly by the Security edition) --------
+nftables
+tor
+torsocks
+
 # --- CLI utilities -----------------------------------------------------------
 neovim
 btop

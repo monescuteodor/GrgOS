@@ -42,11 +42,15 @@ installer chooses one of two editions:
 
 | Edition | What it is |
 |---|---|
-| **Desktop** | The full Hyprland GUI above — AI, productivity, trading. |
-| **Security** | **Terminal-only** (no GUI). Boots to a console with the GrgOS ASCII banner and the **BlackArch** arsenal — **2800+ ethical-hacking tools**, more than Kali. Add tool groups with `pacman -S blackarch-<category>`. |
+| **Desktop** | The full Hyprland GUI above — AI, productivity, trading. Local AI (Ollama) included. |
+| **Security** | **Terminal-only** (no GUI). Boots to a console with the GrgOS ASCII banner and the **BlackArch** arsenal — **2800+ ethical-hacking tools**, more than Kali. Also **privacy-hardened** (firewall, MAC randomization, encrypted DNS, hardened SSH, fail2ban, kernel sysctl hardening) and **server-ready** (SSH + Docker + tmux). Local, offline AI (Ollama). |
 
 > ⚖️ The Security edition is for **authorized** penetration testing, CTFs, labs,
 > research and education only — systems you own or have written permission to test.
+
+**Also included:** out-of-the-box driver building (`linux-headers` + `dkms`),
+`grgos-update` (system + AUR updater), and a keyboard-friendly `tmux` config.
+Automated cloud ISO builds via GitHub Actions (`.github/workflows/build-iso.yml`).
 
 ## Repository layout
 

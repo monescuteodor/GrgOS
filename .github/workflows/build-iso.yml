@@ -1,0 +1,36 @@
+name: Build GrgOS ISO
+
+# Build the ISO in the cloud on demand or when you push a version tag.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: pacman -Sy --noconfirm --needed archiso git rsync imagemagick
+
+      - name: Build the GrgOS ISO
+        run: bash build/build-iso.sh
+
+      - name: Locate ISO
+        id: iso
+        run: echo "path=$(ls "$HOME"/grgos-build/out/*.iso | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grgos-iso
+          path: ${{ steps.iso.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# grgos-update — update GrgOS safely (system repos + AUR).
+set -euo pipefail
+echo ">> Updating GrgOS system packages…"
+sudo pacman -Syu
+if command -v yay >/dev/null 2>&1; then
+  echo ">> Updating AUR packages…"
+  yay -Syu --noconfirm --devel 2>/dev/null || yay -Syu || true
+fi
+echo ">> Done. A reboot is recommended if the kernel was updated."

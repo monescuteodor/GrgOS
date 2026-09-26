@@ -133,11 +133,12 @@ mount "$ROOT_PART" "$TARGET"
 if [[ "$FW" == uefi ]]; then mkdir -p "$TARGET/boot"; mount "$EFI_PART" "$TARGET/boot"; fi
 
 # ---- package sets -----------------------------------------------------------
-BASE=(base base-devel linux linux-firmware sudo networkmanager grub efibootmgr
-      git python python-pip python-pipx nodejs npm gcc clang lld cmake ninja gdb
-      make pkgconf neovim vim btop fastfetch starship eza bat ripgrep fd fzf jq
-      tree wget curl rsync unzip zip p7zip man-db man-pages less openssh zsh
-      bash-completion pciutils usbutils which nano dosfstools e2fsprogs)
+BASE=(base base-devel linux linux-firmware linux-headers dkms sudo networkmanager
+      nftables grub efibootmgr git python python-pip python-pipx nodejs npm gcc
+      clang lld cmake ninja gdb make pkgconf neovim vim tmux btop fastfetch
+      starship eza bat ripgrep fd fzf jq tree wget curl rsync unzip zip p7zip
+      man-db man-pages less openssh zsh bash-completion pciutils usbutils which
+      nano dosfstools e2fsprogs)
 
 DESKTOP=(hyprland hyprpaper hyprlock hypridle xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk qt5-wayland qt6-wayland xorg-xwayland polkit-gnome
